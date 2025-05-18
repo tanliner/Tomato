@@ -1,0 +1,104 @@
+package com.lin.tomato.viewmodel
+
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.lin.tomato.service.NotificationService
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+class TimerViewModel(application: Application) : AndroidViewModel(application) {
+    private val _timerState = MutableStateFlow<TimerState>(TimerState.Work())
+    val timerState: StateFlow<TimerState> = _timerState.asStateFlow()
+
+    private var timerJob: Job? = null
+    private var _isRunning = MutableStateFlow(false)
+    val runningState: StateFlow<Boolean> = _isRunning.asStateFlow()
+    private val notificationService = NotificationService(application)
+
+    fun startTimer() {
+        if (runningState.value) return
+        _isRunning.value = true
+        timerJob = viewModelScope.launch {
+            while (_timerState.value.remainingSeconds > 0) {
+                delay(1000)
+                _timerState.value = when (val currentState = _timerState.value) {
+                    is TimerState.Work -> currentState.copy(remainingSeconds = currentState.remainingSeconds - 1)
+                    is TimerState.Break -> currentState.copy(remainingSeconds = currentState.remainingSeconds - 1)
+                }
+            }
+            // When timer finishes, show notification and switch mode
+            showTimerCompleteNotification()
+            switchTimer()
+            _isRunning.value = false
+        }
+    }
+
+    private fun showTimerCompleteNotification() {
+        val (title, message) = when (_timerState.value) {
+            is TimerState.Work -> "Work Time Complete!" to "Time for a break!"
+            is TimerState.Break -> "Break Time Complete!" to "Ready to get back to work?"
+        }
+        notificationService.showTimerCompleteNotification(title, message)
+    }
+
+    fun pauseTimer() {
+        timerJob?.cancel()
+        _isRunning.value = false
+    }
+
+    fun resetTimer() {
+        timerJob?.cancel()
+        _isRunning.value = false
+        _timerState.value = when (_timerState.value) {
+            is TimerState.Work -> TimerState.Work()
+            is TimerState.Break -> TimerState.Break()
+        }
+    }
+
+    fun setWorkDuration(minutes: Int) {
+        if (_timerState.value is TimerState.Work && !_isRunning.value) {
+            _timerState.value = TimerState.Work(minutes * 60)
+        }
+    }
+
+    fun setBreakDuration(minutes: Int) {
+        if (_timerState.value is TimerState.Break && !_isRunning.value) {
+            _timerState.value = TimerState.Break(minutes * 60)
+        }
+    }
+
+    private fun switchTimer() {
+        _timerState.value = when (_timerState.value) {
+            is TimerState.Work -> TimerState.Break()
+            is TimerState.Break -> TimerState.Work()
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        timerJob?.cancel()
+    }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val application = this[APPLICATION_KEY] as Application
+                TimerViewModel(application)
+            }
+        }
+    }
+}
+
+sealed class TimerState(open val remainingSeconds: Int) {
+    data class Work(override val remainingSeconds: Int = 45 * 60) : TimerState(remainingSeconds)
+    data class Break(override val remainingSeconds: Int = 10 * 60) : TimerState(remainingSeconds)
+}

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+  <group android:scaleX="0.78184617"
+      android:scaleY="0.78184617"
+      android:translateX="11.780308"
+      android:translateY="5.9164615">
+      
+      <group
+          android:scaleX="0.6"
+          android:scaleY="0.6"
+          android:translateX="21.6"
+          android:translateY="21.6">
+          
+          <!-- Main tomato body -->
+          <path
+              android:fillColor="#F44336"
+              android:pathData="M54,40C33,40 16,57 16,78C16,99 33,116 54,116C75,116 92,99 92,78C92,57 75,40 54,40Z">
+          </path>
+
+          <!-- Tomato shine/highlight -->
+          <path
+              android:fillColor="#FFFFFF"
+              android:fillAlpha="0.2"
+              android:pathData="M54,40C75,40 92,57 92,78C92,99 75,116 54,116C33,116 16,99 16,78C16,57 33,40 54,40M54,36C31,36 12,55 12,78C12,101 31,120 54,120C77,120 96,101 96,78C96,55 77,36 54,36L54,36Z">
+          </path>
+
+          <!-- Left leaf -->
+          <path
+              android:fillColor="#4CAF50"
+              android:pathData="M54,40C54,40 42,28 30,33C18,38 25,53 37,48C49,43 54,40 54,40Z">
+          </path>
+
+          <!-- Right leaf -->
+          <path
+              android:fillColor="#4CAF50"
+              android:pathData="M54,40C54,40 66,28 78,33C90,38 83,53 71,48C59,43 54,40 54,40Z">
+          </path>
+
+          <!-- Stem -->
+          <path
+              android:fillColor="#33691E"
+              android:pathData="M54,40L54,22C54,22 59,17 54,12C49,17 54,22 54,22L54,40Z">
+          </path>
+
+          <!-- Shine detail -->
+          <path
+              android:fillColor="#FFFFFF"
+              android:fillAlpha="0.3"
+              android:pathData="M35,65C35,65 45,75 54,75C63,75 73,65 73,65C73,65 63,55 54,55C45,55 35,65 35,65Z">
+          </path>
+      </group>
+  </group>
+</vector>
