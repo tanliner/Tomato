@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -27,6 +28,8 @@ import com.lin.tomato.viewmodel.TimerState
 fun TimerDisplay(
     timerState: TimerState,
     runningState: Boolean,
+    workCycles: Int,
+    breakCycles: Int,
     onStartClick: () -> Unit,
     onPauseClick: () -> Unit,
     onResetClick: () -> Unit,
@@ -34,9 +37,10 @@ fun TimerDisplay(
     onBreakDurationSelect: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var isPlaying = runningState
     Column(
-        modifier = modifier.fillMaxWidth().padding(16.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Timer type indicator
@@ -59,45 +63,94 @@ fun TimerDisplay(
             color = MaterialTheme.colorScheme.onSurface
         )
 
-        Spacer(modifier = Modifier.height(64.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         // Duration selection
         when (timerState) {
-            is TimerState.Work -> WorkDurationSelector(isRunning = isPlaying, onWorkDurationSelect)
-            is TimerState.Break -> BreakDurationSelector(isRunning = isPlaying, onBreakDurationSelect)
+            is TimerState.Work -> WorkDurationSelector(isRunning = runningState, onWorkDurationSelect)
+            is TimerState.Break -> BreakDurationSelector(isRunning = runningState, onBreakDurationSelect)
         }
+
         Spacer(modifier = Modifier.height(24.dp))
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+
+        MainControlButton(runningState, onStartClick, onPauseClick, onResetClick)
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        WorkingCycles(workCycles, breakCycles)
+    }
+}
+
+@Composable
+private fun WorkingCycles(workCycles: Int, breakCycles: Int) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Button(onClick = {
-                isPlaying = false
-                onResetClick()
-            }) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Text(
-                    "Reset",
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.displaySmall,
-                    color = Warning
+                    text = "Work Cycles",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = workCycles.toString(),
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
-            Button(onClick = {
-                if (isPlaying) {
-                    onPauseClick()
-                } else {
-                    onStartClick()
-                }
-                isPlaying = !isPlaying
-            }) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Text(
-                    if (isPlaying) "Pause" else "Start",
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.displaySmall
+                    text = "Break Cycles",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = breakCycles.toString(),
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.secondary
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun MainControlButton(
+    runningState: Boolean,
+    onStartClick: () -> Unit,
+    onPauseClick: () -> Unit,
+    onResetClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Button(onClick = onResetClick) {
+            Text(
+                "Reset",
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.displaySmall,
+                color = Warning
+            )
+        }
+        Button(onClick = if (runningState) onPauseClick else onStartClick) {
+            Text(
+                if (runningState) "Pause" else "Start",
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.displaySmall
+            )
         }
     }
 }
@@ -153,7 +206,7 @@ private fun DurationButton(duration: Int, isRunning: Boolean, onClick: (Int) -> 
 @Composable
 fun TimerDisplayWork_Preview() {
     TimerDisplay(
-        TimerState.Work(2 * 60), false, { }, {}, {}, {}, {},
+        TimerState.Work(2 * 60), false, 0, 0, {}, {}, {}, {}, {},
     )
 }
 
@@ -161,7 +214,7 @@ fun TimerDisplayWork_Preview() {
 @Composable
 fun TimerDisplayBreak_Preview() {
     TimerDisplay(
-        TimerState.Break(60), false, { }, {}, {}, {}, {},
+        TimerState.Break(60), false, 0, 0, {}, {}, {}, {}, {},
     )
 }
 

@@ -17,7 +17,9 @@ fun MainScreen(
     viewModel: TimerViewModel = viewModel(factory = TimerViewModel.Factory)
 ) {
     val timerState by viewModel.timerState.collectAsState()
-    val runningState by viewModel.runningState.collectAsState()
+    val workCycles by viewModel.workCycles.collectAsState()
+    val breakCycles by viewModel.breakCycles.collectAsState()
+    val isRunning by viewModel.runningState.collectAsState()
 
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -25,12 +27,14 @@ fun MainScreen(
     ) {
         TimerDisplay(
             timerState = timerState,
-            runningState = runningState,
+            runningState = isRunning,
+            workCycles = workCycles,
+            breakCycles = breakCycles,
             onStartClick = viewModel::startTimer,
             onPauseClick = viewModel::pauseTimer,
             onResetClick = viewModel::resetTimer,
             onWorkDurationSelect = viewModel::setWorkDuration,
-            onBreakDurationSelect = viewModel::setBreakDuration
+            onBreakDurationSelect = viewModel::setBreakDuration,
         )
     }
 } 

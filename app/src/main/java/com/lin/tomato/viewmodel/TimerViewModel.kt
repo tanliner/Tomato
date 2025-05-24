@@ -19,6 +19,12 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
     private val _timerState = MutableStateFlow<TimerState>(TimerState.Work())
     val timerState: StateFlow<TimerState> = _timerState.asStateFlow()
 
+    private val _workCycles = MutableStateFlow(0)
+    val workCycles: StateFlow<Int> = _workCycles.asStateFlow()
+
+    private val _breakCycles = MutableStateFlow(0)
+    val breakCycles: StateFlow<Int> = _breakCycles.asStateFlow()
+
     private var timerJob: Job? = null
     private var _isRunning = MutableStateFlow(false)
     val runningState: StateFlow<Boolean> = _isRunning.asStateFlow()
@@ -37,6 +43,11 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             }
             // When timer finishes, show notification and switch mode
             showTimerCompleteNotification()
+            // Increment cycle counter before switching
+            when (_timerState.value) {
+                is TimerState.Work -> _workCycles.value++
+                is TimerState.Break -> _breakCycles.value++
+            }
             switchTimer()
             _isRunning.value = false
         }
@@ -62,6 +73,11 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             is TimerState.Work -> TimerState.Work()
             is TimerState.Break -> TimerState.Break()
         }
+    }
+
+    fun resetCycles() {
+        _workCycles.value = 0
+        _breakCycles.value = 0
     }
 
     fun setWorkDuration(minutes: Int) {

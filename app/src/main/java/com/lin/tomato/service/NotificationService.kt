@@ -2,7 +2,9 @@ package com.lin.tomato.service
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.media.AudioAttributes
 import android.media.RingtoneManager
 import android.net.Uri
@@ -11,6 +13,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
+import com.lin.tomato.MainActivity
 import com.lin.tomato.R
 
 class NotificationService(private val context: Context) {
@@ -25,9 +28,7 @@ class NotificationService(private val context: Context) {
 
     private val channelId = "tomato_timer_channel"
     private var notificationId = 1
-    private val soundUri: Uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-        .takeIf { it != null }
-        ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+    private val soundUri: Uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
 
     init {
         createNotificationChannel()
@@ -66,22 +67,16 @@ class NotificationService(private val context: Context) {
             .setAutoCancel(true)
             .setSound(soundUri)
             .setDefaults(NotificationCompat.DEFAULT_SOUND)
-            // .setContentIntent(
-            //     PendingIntent.getActivity(
-            //         context,
-            //         0x100,
-            //         Intent(context, MainActivity::class.java).apply {
-            //             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
-            //         },
-            //         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            //     )
-            //
-            //     // .also { pendingIntent ->
-            //     //     pendingIntent.send(context, 0, Intent().apply {
-            //     //         putExtra("NOTIFICATION_ID", notificationId)
-            //     //     })
-            //     // }
-            // )
+            .setContentIntent(
+                PendingIntent.getActivity(
+                    context,
+                    0x100,
+                    Intent(context, MainActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    },
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+            )
             .build()
 
         notificationManager.notify(notificationId++, notification)
