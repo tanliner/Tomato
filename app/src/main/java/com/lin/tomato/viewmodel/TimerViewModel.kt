@@ -5,8 +5,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.lin.tomato.navigation.Screen
 import com.lin.tomato.service.NotificationService
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -15,7 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class TimerViewModel(application: Application) : AndroidViewModel(application) {
+class TimerViewModel(application: Application, timerMode: String) : AndroidViewModel(application) {
     private val _timerState = MutableStateFlow<TimerState>(TimerState.Work())
     val timerState: StateFlow<TimerState> = _timerState.asStateFlow()
 
@@ -25,13 +27,22 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
     private val _breakCycles = MutableStateFlow(0)
     val breakCycles: StateFlow<Int> = _breakCycles.asStateFlow()
 
-    private var timerJob: Job? = null
-    private var _isRunning = MutableStateFlow(false)
+    private val _isRunning = MutableStateFlow(false)
     val runningState: StateFlow<Boolean> = _isRunning.asStateFlow()
+
+    private var timerJob: Job? = null
     private val notificationService = NotificationService(application)
 
+    private val dryRun: Boolean = timerMode == Screen.Timer.DRY_RUN_MODE
+    private val secondInMinutes = if (dryRun) 1 else 60
+
+    init {
+        if (dryRun) {
+            setWorkDuration(5)
+        }
+    }
     fun startTimer() {
-        if (runningState.value) return
+        if (_isRunning.value) return
         _isRunning.value = true
         timerJob = viewModelScope.launch {
             while (_timerState.value.remainingSeconds > 0) {
@@ -82,13 +93,13 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setWorkDuration(minutes: Int) {
         if (_timerState.value is TimerState.Work && !_isRunning.value) {
-            _timerState.value = TimerState.Work(minutes * 60)
+            _timerState.value = TimerState.Work(minutes * secondInMinutes)
         }
     }
 
     fun setBreakDuration(minutes: Int) {
         if (_timerState.value is TimerState.Break && !_isRunning.value) {
-            _timerState.value = TimerState.Break(minutes * 60)
+            _timerState.value = TimerState.Break(minutes * secondInMinutes)
         }
     }
 
@@ -105,10 +116,12 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     companion object {
+        val RUNNING_MODE = object : CreationExtras.Key<String> {}
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = this[APPLICATION_KEY] as Application
-                TimerViewModel(application)
+                val mode = this[RUNNING_MODE] ?: Screen.Timer.WORK_MODE
+                TimerViewModel(application, mode)
             }
         }
     }

@@ -7,14 +7,33 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.HasDefaultViewModelProviderFactory
+import androidx.lifecycle.viewmodel.CreationExtras
+import androidx.lifecycle.viewmodel.MutableCreationExtras
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.lin.tomato.navigation.Screen
 import com.lin.tomato.ui.components.TimerDisplay
 import com.lin.tomato.viewmodel.TimerViewModel
 
 @Composable
 fun MainScreen(
     modifier: Modifier = Modifier,
-    viewModel: TimerViewModel = viewModel(factory = TimerViewModel.Factory)
+    timerMode: String = Screen.Timer.WORK_MODE,
+    viewModel: TimerViewModel = viewModel(
+        factory = TimerViewModel.Factory,
+        extras = MutableCreationExtras(
+            with(LocalViewModelStoreOwner.current) {
+                if (this is HasDefaultViewModelProviderFactory) {
+                    this.defaultViewModelCreationExtras
+                } else {
+                    CreationExtras.Empty
+                }
+            }
+        ).also {
+            it[TimerViewModel.RUNNING_MODE] = timerMode
+        }
+    )
 ) {
     val timerState by viewModel.timerState.collectAsState()
     val workCycles by viewModel.workCycles.collectAsState()
