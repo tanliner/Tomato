@@ -80,6 +80,7 @@ class NotificationService(private val context: Context) {
             .build()
 
         notificationManager.notify(notificationId++, notification)
+        vibrate()
     }
 
     fun vibrate() {

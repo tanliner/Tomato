@@ -1,6 +1,9 @@
 package com.lin.tomato.viewmodel
 
 import android.app.Application
+import android.content.Context
+import android.content.Intent
+import android.os.Build
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -10,6 +13,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.lin.tomato.navigation.Screen
 import com.lin.tomato.service.NotificationService
+import com.lin.tomato.service.TimerService
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class TimerViewModel(application: Application, timerMode: String) : AndroidViewModel(application) {
+class TimerViewModel(private val application: Application, timerMode: String) : AndroidViewModel(application) {
     private val _timerState = MutableStateFlow<TimerState>(TimerState.Work())
     val timerState: StateFlow<TimerState> = _timerState.asStateFlow()
 
@@ -44,6 +48,7 @@ class TimerViewModel(application: Application, timerMode: String) : AndroidViewM
     fun startTimer() {
         if (_isRunning.value) return
         _isRunning.value = true
+        startTimerService(application, _timerState.value.remainingSeconds)
         timerJob = viewModelScope.launch {
             while (_timerState.value.remainingSeconds > 0) {
                 delay(1000)
@@ -61,7 +66,24 @@ class TimerViewModel(application: Application, timerMode: String) : AndroidViewM
             }
             switchTimer()
             _isRunning.value = false
+            stopTimerService(application)
         }
+    }
+
+    fun startTimerService(context: Context, durationSeconds: Int) {
+        val intent = Intent(context, TimerService::class.java).apply {
+            putExtra(TimerService.EXTRA_DURATION, durationSeconds)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent)
+        } else {
+            context.startService(intent)
+        }
+    }
+
+    fun stopTimerService(context: Context) {
+        val intent = Intent(context, TimerService::class.java)
+        context.stopService(intent)
     }
 
     private fun showTimerCompleteNotification() {
@@ -73,11 +95,13 @@ class TimerViewModel(application: Application, timerMode: String) : AndroidViewM
     }
 
     fun pauseTimer() {
+        stopTimerService(application)
         timerJob?.cancel()
         _isRunning.value = false
     }
 
     fun resetTimer() {
+        stopTimerService(application)
         timerJob?.cancel()
         _isRunning.value = false
         _timerState.value = when (_timerState.value) {

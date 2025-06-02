@@ -27,7 +27,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             TomatoTheme {
-                TomatoApp()
+                // TomatoApp()
+                MainScreen(timerMode = Screen.Timer.WORK_MODE)
             }
         }
     }
